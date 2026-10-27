@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!-- Muro de la clase: aquí el profesor y sus alumnos publican y responden comentarios. -->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comentarios de {{ clase.nombre }} | AulaFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/comentarios.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <a class="brand" href="{% if rol_menu == 'profesor' %}{{ url_for('panel_profesor') }}{% else %}{{ url_for('panel_alumno') }}{% endif %}"><span class="brand-icon"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span><span>Aula<strong>Flow</strong></span></a>
+        <div class="nav-label">MENÚ</div>
+        <a class="nav-item" href="{% if rol_menu == 'profesor' %}{{ url_for('panel_profesor') }}{% else %}{{ url_for('panel_alumno') }}{% endif %}"><span class="nav-icon">⌂</span> Inicio</a>
+        <section class="sidebar-classes" aria-label="Mis clases"><p class="sidebar-section-label">MIS CLASES</p>
+            {% if clases_menu %}<nav class="sidebar-class-list" aria-label="Acceso a mis clases">{% for clase_menu in clases_menu %}<a class="sidebar-class-link{% if clase_actual_id == clase_menu.id %} active{% endif %}" href="{% if rol_menu == 'profesor' %}{{ url_for('detalle_clase_profesor', clase_id=clase_menu.id) }}{% else %}{{ url_for('detalle_clase_alumno', clase_id=clase_menu.id) }}{% endif %}" title="{{ clase_menu.nombre }}">{% if clase_menu.foto_clase %}<img class="sidebar-class-photo" src="{{ clase_menu.foto_clase }}" alt="">{% else %}<span class="sidebar-class-icon" aria-hidden="true">▦</span>{% endif %}<span class="sidebar-class-name">{{ clase_menu.nombre }}</span></a>{% endfor %}</nav>{% else %}<p class="sidebar-empty">Aún no tienes clases</p>{% endif %}
+        </section>
+        <div class="sidebar-bottom">
+            <a class="profile-mini profile-link" href="{% if rol_menu == 'profesor' %}{{ url_for('perfil_profesor') }}{% else %}{{ url_for('perfil_alumno') }}{% endif %}">
+                {% if usuario.get('foto_perfil') %}<img class="avatar" src="{% if usuario.get('foto_perfil').startswith('data:image/') %}{{ usuario.get('foto_perfil') }}{% else %}{{ url_for('static', filename='uploads/perfiles/' ~ usuario.get('foto_perfil')) }}{% endif %}" alt="">
+                {% else %}<span class="avatar">{{ usuario.get('nombre', 'A')[:1]|upper }}</span>{% endif %}
+                <span class="profile-copy"><strong>{{ usuario.get('nombre', usuario.get('Usuario', 'Usuario')) }} {{ usuario.get('apellidos', '') }}</strong><small>{{ 'Profesor' if rol_menu == 'profesor' else 'Alumno' }} · Editar perfil</small></span>
+            </a>
+            <a class="nav-item logout" href="{{ url_for('logout') }}"><span class="nav-icon">↪</span> Cerrar sesión</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar"><div class="breadcrumb"><a href="{% if rol_menu == 'profesor' %}{{ url_for('panel_profesor') }}{% else %}{{ url_for('panel_alumno') }}{% endif %}">AulaFlow</a><span>/</span><a href="{% if rol_menu == 'profesor' %}{{ url_for('detalle_clase_profesor', clase_id=clase.id) }}{% else %}{{ url_for('detalle_clase_alumno', clase_id=clase.id) }}{% endif %}">{{ clase.nombre }}</a><span>/</span>Comentarios</div><a class="top-link" href="{% if rol_menu == 'profesor' %}{{ url_for('detalle_clase_profesor', clase_id=clase.id) }}{% else %}{{ url_for('detalle_clase_alumno', clase_id=clase.id) }}{% endif %}">← Volver a la clase</a></header>
+        <section class="page-heading"><p class="eyebrow">{{ clase.materia }} · {{ clase.nombre }}</p><h1>Comentarios de la clase</h1><p>Publicaciones del profesor, preguntas y aportaciones de la clase.</p></section>
+
+        {% with mensajes = get_flashed_messages(with_categories=true) %}{% if mensajes %}<div class="messages" aria-live="polite">{% for categoria, mensaje in mensajes %}<p class="message {{ categoria }}">{{ mensaje }}</p>{% endfor %}</div>{% endif %}{% endwith %}
+
+        <!-- El profesor inicia publicaciones; el alumno participa respondiendo. -->
+        {% if rol_menu == 'profesor' %}
+        <form class="composer form-card" method="post" action="{{ url_for('publicar_comentario', clase_id=clase.id) }}">
+            <label for="contenido">Nueva publicación para la clase</label>
+            <textarea id="contenido" name="contenido" rows="4" maxlength="3000" placeholder="Comparte un aviso, una pregunta o un tema para conversar..." required></textarea>
+            <div class="composer-footer"><small>Máximo 3000 caracteres. Los alumnos podrán responder.</small><button class="primary-button" type="submit"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Publicar</button></div>
+        </form>
+        {% else %}
+        <div class="student-note"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i><span>¿Tienes una duda o algo que aportar? Responde a una publicación del profesor.</span></div>
+        {% endif %}
+
+        <!-- Esta lista se llena con los comentarios y respuestas que vienen de Firestore. -->
+        <section class="discussion-list" aria-label="Publicaciones y respuestas">
+            {% if comentarios %}
+                {% for comentario in comentarios %}
+                <article class="comment-card form-card" id="comentario-{{ comentario.id }}">
+                    <div class="author-row">
+                        {% if comentario.get('autor_foto') %}<img class="author-avatar" src="{% if comentario.autor_foto.startswith('data:image/') %}{{ comentario.autor_foto }}{% else %}{{ url_for('static', filename='uploads/perfiles/' ~ comentario.autor_foto) }}{% endif %}" alt="Foto de {{ comentario.autor_nombre }}">
+                        {% else %}<span class="author-avatar avatar-fallback">{{ comentario.get('autor_nombre', 'P')[:1]|upper }}</span>{% endif %}
+                        <div class="author-details"><strong>{{ comentario.get('autor_nombre', 'Profesor') }}</strong><span class="role-badge">{{ 'Profesor' if comentario.get('autor_rol') == 'profesor' else 'Alumno' }}</span><small>{{ comentario.creado_en|hora_oaxaca('%d/%m/%Y · %H:%M') if comentario.get('creado_en') else '' }}</small></div>
+                        {% if comentario.get('autor_id') == session.get('usuario_id') %}<form class="delete-form" method="post" action="{{ url_for('eliminar_comentario', clase_id=clase.id, comentario_id=comentario.id) }}" onsubmit="return confirm('¿Eliminar esta publicación y todas sus respuestas?');"><button class="delete-button" type="submit"><i class="fa-regular fa-trash-can" aria-hidden="true"></i> Eliminar</button></form>{% endif %}
+                    </div>
+                    <div class="comment-content">{{ comentario.get('contenido', '') }}</div>
+
+                    {% if comentario.respuestas %}<div class="reply-list" aria-label="Respuestas">
+                        {% for respuesta in comentario.respuestas %}<article class="reply-card">
+                            {% if respuesta.get('autor_foto') %}<img class="reply-avatar" src="{% if respuesta.autor_foto.startswith('data:image/') %}{{ respuesta.autor_foto }}{% else %}{{ url_for('static', filename='uploads/perfiles/' ~ respuesta.autor_foto) }}{% endif %}" alt="Foto de {{ respuesta.autor_nombre }}">
+                            {% else %}<span class="reply-avatar avatar-fallback">{{ respuesta.get('autor_nombre', 'U')[:1]|upper }}</span>{% endif %}
+                            <div class="reply-body"><div class="reply-heading"><strong>{{ respuesta.get('autor_nombre', 'Usuario') }}</strong><span class="role-badge">{{ 'Profesor' if respuesta.get('autor_rol') == 'profesor' else 'Alumno' }}</span><small>{{ respuesta.creado_en|hora_oaxaca('%d/%m/%Y · %H:%M') if respuesta.get('creado_en') else '' }}</small></div><div class="comment-content">{{ respuesta.get('contenido', '') }}</div></div>
+                            {% if respuesta.get('autor_id') == session.get('usuario_id') %}<form class="delete-form reply-delete-form" method="post" action="{{ url_for('eliminar_respuesta_comentario', clase_id=clase.id, comentario_id=comentario.id, respuesta_id=respuesta.id) }}" onsubmit="return confirm('¿Eliminar esta respuesta?');"><button class="delete-button" type="submit" aria-label="Eliminar respuesta"><i class="fa-regular fa-trash-can" aria-hidden="true"></i></button></form>{% endif %}
+                        </article>{% endfor %}
+                    </div>{% endif %}
+
+                    <form class="reply-form" method="post" action="{{ url_for('responder_comentario', clase_id=clase.id, comentario_id=comentario.id) }}">
+                        <label class="sr-only" for="respuesta-{{ comentario.id }}">Escribe una respuesta</label>
+                        <textarea id="respuesta-{{ comentario.id }}" name="contenido" rows="2" maxlength="2000" placeholder="Escribe una respuesta o pregunta..." required></textarea>
+                        <button class="secondary-button" type="submit"><i class="fa-solid fa-reply" aria-hidden="true"></i> Responder</button>
+                    </form>
+                </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state"><i class="fa-regular fa-comments" aria-hidden="true"></i><h2>Aún no hay publicaciones</h2><p>{% if rol_menu == 'profesor' %}Inicia la conversación con un aviso, pregunta o tema para tu clase.{% else %}Cuando el profesor publique algo, aparecerá aquí para que puedas responder.{% endif %}</p></div>
+            {% endif %}
+        </section>
+        <footer>© AulaFlow · Tu espacio académico</footer>
+    </main>
+</body>
+</html>

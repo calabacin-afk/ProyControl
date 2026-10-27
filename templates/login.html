@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<!-- Formulario de acceso: envía usuario y contraseña al servidor para validar la cuenta. -->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión | AulaFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+    <main class="auth-shell">
+        <a class="brand" href="{{ url_for('index') }}"><span class="brand-icon"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span><span>Aula<strong>Flow</strong></span></a>
+        <section class="auth-card">
+            <div class="eyebrow">Bienvenido de vuelta</div>
+            <h1>Iniciar sesión</h1>
+            <p class="subtitle">Accede a tu espacio de AulaFlow.</p>
+            {% with mensajes = get_flashed_messages(with_categories=true) %}
+                {% if mensajes %}<div class="messages" aria-live="polite">{% for categoria, mensaje in mensajes %}<p class="message {{ categoria }}">{{ mensaje }}</p>{% endfor %}</div>{% endif %}
+            {% endwith %}
+            <form action="{{ url_for('validar_login') }}" method="post">
+                <label for="Usuario">Usuario</label>
+                <input id="Usuario" name="Usuario" type="text" autocomplete="username" minlength="4" maxlength="30" required autofocus>
+                <label for="Clave">Contraseña</label>
+                <input id="Clave" name="Clave" type="password" autocomplete="current-password" required>
+                <button class="primary-button" type="submit">Entrar <span aria-hidden="true">→</span></button>
+            </form>
+            <p class="switch-link">¿Aún no tienes cuenta? <a href="{{ url_for('registro') }}">Regístrate</a></p>
+        </section>
+        <p class="back-link"><a href="{{ url_for('index') }}">← Volver al inicio</a></p>
+    </main>
+</body>
+</html>

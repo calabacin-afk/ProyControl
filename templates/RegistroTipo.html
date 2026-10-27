@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!-- Aquí la persona elige si va a registrarse como alumno o como profesor. -->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear cuenta | AulaFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+    <main class="auth-shell">
+        <a class="brand" href="{{ url_for('index') }}"><span class="brand-icon"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span><span>Aula<strong>Flow</strong></span></a>
+        <section class="auth-card">
+            <div class="eyebrow">Paso 1 de 2</div>
+            <h1>Crear una cuenta</h1>
+            <p class="subtitle">Primero dinos cómo usarás AulaFlow.</p>
+            {% with mensajes = get_flashed_messages(with_categories=true) %}
+                {% if mensajes %}<div class="messages" aria-live="polite">{% for categoria, mensaje in mensajes %}<p class="message {{ categoria }}">{{ mensaje }}</p>{% endfor %}</div>{% endif %}
+            {% endwith %}
+        <!-- La elección de rol le dice al servidor qué tipo de cuenta va a crear. -->
+        <form action="{{ url_for('seleccionar_tipo') }}" method="post" id="tipo-form">
+                <fieldset class="role-options">
+                    <legend>Tipo de cuenta</legend>
+                    <label class="role-option"><input type="radio" name="tipo_usuario" value="alumno" required><span><strong>Soy alumno</strong><small>Solicita y administra tus turnos.</small></span></label>
+                    <label class="role-option"><input type="radio" name="tipo_usuario" value="profesor" required><span><strong>Soy profesor</strong><small>Gestiona la atención de tus alumnos.</small></span></label>
+                </fieldset>
+                <div class="field-group" id="codigo-field" hidden>
+                    <label for="codigo_admin">Código de registro para profesor</label>
+                    <input id="codigo_admin" name="codigo_admin" type="password" autocomplete="off">
+                    <small>Solicita el código a la persona administradora.</small>
+                </div>
+                <button class="primary-button" type="submit">Continuar <span aria-hidden="true">→</span></button>
+            </form>
+            <p class="switch-link">¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia sesión</a></p>
+        </section>
+        <p class="back-link"><a href="{{ url_for('index') }}">← Volver al inicio</a></p>
+    </main>
+    <!-- Este pequeño script solo muestra el código adicional cuando se elige profesor. -->
+    <script>
+        var codigoField = document.getElementById('codigo-field');
+        var codigoInput = document.getElementById('codigo_admin');
+        var opcionesTipo = document.querySelectorAll('input[name="tipo_usuario"]');
+        for (var index = 0; index < opcionesTipo.length; index += 1) {
+            opcionesTipo[index].addEventListener('change', function (event) {
+                var radio = event.currentTarget;
+                var profesor = radio.checked && radio.value === 'profesor';
+                codigoField.hidden = !profesor;
+                codigoInput.required = profesor;
+                if (!profesor) codigoInput.value = '';
+            });
+        }
+    </script>
+</body>
+</html>

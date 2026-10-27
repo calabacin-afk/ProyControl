@@ -1,0 +1,421 @@
+
+<!DOCTYPE html>
+<!-- Vista del profesor para administrar alumnos y controlar la fila de esta clase. -->
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ clase.nombre }} | AulaFlow</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/gestionclase.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+    <!-- BARRA LATERAL -->
+    <aside class="sidebar">
+
+        <a class="brand" href="{{ url_for('panel_profesor') }}">
+            <span class="brand-icon">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </span>
+
+            <span>Aula<strong>Flow</strong></span>
+        </a>
+
+        <div class="nav-label">MENÚ</div>
+
+        <a class="nav-item" href="{{ url_for('panel_profesor') }}">
+            <span class="nav-icon">⌂</span>
+            Inicio
+        </a>
+
+        <section class="sidebar-classes" aria-label="Clases creadas">
+            <p class="sidebar-section-label">MIS CLASES</p>
+            {% if clases_menu %}<nav class="sidebar-class-list" aria-label="Acceso a mis clases">
+                {% for clase_menu in clases_menu %}<a class="sidebar-class-link{% if clase_actual_id == clase_menu.id %} active{% endif %}" href="{{ url_for('detalle_clase_profesor', clase_id=clase_menu.id) }}" title="{{ clase_menu.nombre }}">{% if clase_menu.foto_clase %}<img class="sidebar-class-photo" src="{{ clase_menu.foto_clase }}" alt="">{% else %}<span class="sidebar-class-icon" aria-hidden="true">▦</span>{% endif %}<span class="sidebar-class-name">{{ clase_menu.nombre }}</span></a>{% endfor %}
+            </nav>{% else %}<p class="sidebar-empty">Aún no tienes clases</p>{% endif %}
+        </section>
+
+        <!-- PERFIL Y CIERRE DE SESIÓN -->
+        <div class="sidebar-bottom">
+
+            <a
+                class="profile-mini profile-link"
+                href="{{ url_for('perfil_profesor') }}"
+            >
+                {% if usuario.get('foto_perfil') %}
+                    <img class="avatar"
+                         src="{% if usuario.get('foto_perfil').startswith('data:image/') %}{{ usuario.get('foto_perfil') }}{% else %}{{ url_for('static', filename='uploads/perfiles/' ~ usuario.get('foto_perfil')) }}{% endif %}"
+                         alt="">
+                {% else %}
+                    <span class="avatar">{{ usuario.get('nombre', usuario.get('Usuario', 'P'))[:1]|upper }}</span>
+                {% endif %}
+
+                <span class="profile-copy">
+                    <strong>
+                        {{ usuario.get('nombre', usuario.get('Usuario', 'Profesor')) }}
+                        {{ usuario.get('apellidos', '') }}
+                    </strong>
+
+                    <small>Profesor · Editar perfil</small>
+                </span>
+            </a>
+
+            <a class="nav-item logout" href="{{ url_for('logout') }}">
+                <span class="nav-icon">↪</span>
+                Cerrar sesión
+            </a>
+
+        </div>
+
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+
+        <!-- ENCABEZADO -->
+        <header class="topbar">
+
+            <div class="breadcrumb">
+                <a href="{{ url_for('panel_profesor') }}">AulaFlow</a>
+                <span>/</span>
+                {{ clase.nombre }}
+            </div>
+
+            <a
+                class="top-link"
+                href="{{ url_for('panel_profesor') }}"
+            >
+                ← Volver al panel
+            </a>
+
+        </header>
+
+        <!-- INFORMACIÓN DE LA CLASE -->
+        <section class="page-heading">
+
+            <p class="eyebrow">{{ clase.materia }}</p>
+
+            <h1>{{ clase.nombre }}</h1>
+
+            <p>Gestiona a tus alumnos y la fila de atención.</p>
+
+        </section>
+
+        <a class="discussion-link" href="{{ url_for('comentarios_clase', clase_id=clase.id) }}"><i class="fa-solid fa-comments" aria-hidden="true"></i> Comentarios de la clase</a>
+
+        <!-- MENSAJES DE FLASK -->
+        {% with mensajes = get_flashed_messages(with_categories=true) %}
+
+            {% if mensajes %}
+
+                <div class="messages" aria-live="polite">
+
+                    {% for categoria, mensaje in mensajes %}
+
+                        <p class="message {{ categoria }}">
+                            {{ mensaje }}
+                        </p>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+        {% endwith %}
+
+        <section class="code-card">
+
+            <div>
+                <span class="summary-label">
+                    CÓDIGO PARA UNIRSE
+                </span>
+
+                <strong class="class-code">
+                    {{ clase.codigo }}
+                </strong>
+
+                <small>
+                    Comparte este código con tus alumnos.
+                </small>
+            </div>
+
+            <a
+                class="history-link"
+                href="{{ url_for('historial_filas', clase_id=clase.id) }}"
+            >
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                Historial de filas
+            </a>
+
+        </section>
+
+        <!-- GESTIÓN DE LA FILA VIRTUAL -->
+        <section class="form-card queue-card">
+
+            <div class="section-heading">
+
+                <div>
+                    <p class="eyebrow">ATENCIÓN</p>
+                    <h2>Fila virtual</h2>
+                </div>
+
+                <span class="status {{ fila.estado if fila else 'inactiva' }}">
+                    {{
+                        'Abierta'
+                        if fila and fila.estado == 'abierta'
+                        else (
+                            'En pausa'
+                            if fila and fila.estado == 'pausada'
+                            else 'Sin iniciar'
+                        )
+                    }}
+                </span>
+
+            </div>
+
+            <!-- ESTADO ACTUAL -->
+            {% if fila %}
+
+                <p class="muted">
+                    Iniciada
+                    {{ fila.iniciada_en|hora_oaxaca('%d/%m/%Y a las %H:%M')
+                       if fila.iniciada_en else '' }}
+                    · {{ fila.alumnos|length }} alumno(s) en la fila
+                </p>
+
+            {% else %}
+
+                <p class="muted">
+                    Inicia la fila cuando quieras recibir alumnos.
+                </p>
+
+            {% endif %}
+
+            <!-- CONTROLES DE LA FILA -->
+            <div class="controls">
+
+                {% if not fila %}
+
+                    <form
+                        method="post"
+                        action="{{ url_for('iniciar_fila', clase_id=clase.id) }}"
+                    >
+                        <button class="primary-button" type="submit">
+                            <i class="fa-solid fa-play"></i>
+                            Iniciar fila
+                        </button>
+                    </form>
+
+                {% else %}
+
+                    {% if fila.estado == 'abierta' %}
+
+                        <form
+                            method="post"
+                            action="{{ url_for('pausar_fila', clase_id=clase.id) }}"
+                        >
+                            <button
+                                class="secondary-button"
+                                type="submit"
+                            >
+                                <i class="fa-solid fa-pause"></i>
+                                Poner en pausa
+                            </button>
+                        </form>
+
+                    {% elif fila.estado == 'pausada' %}
+
+                        <form
+                            method="post"
+                            action="{{ url_for('reanudar_fila', clase_id=clase.id) }}"
+                        >
+                            <button class="primary-button" type="submit">
+                                <i class="fa-solid fa-play"></i>
+                                Reanudar fila
+                            </button>
+                        </form>
+
+                    {% endif %}
+
+                    <form
+                        method="post"
+                        action="{{ url_for('finalizar_fila', clase_id=clase.id) }}"
+                        onsubmit="return confirm('¿Finalizar la fila? Se guardará en el historial.');"
+                    >
+                        <button class="danger-button" type="submit">
+                            <i class="fa-solid fa-stop"></i>
+                            Finalizar fila
+                        </button>
+                    </form>
+
+                {% endif %}
+
+            </div>
+
+            <!-- ALUMNOS EN LA FILA -->
+            {% if fila and fila.alumnos %}
+
+                <h3 class="subheading">Alumnos en la fila</h3>
+
+                <div class="member-list">
+
+                    {% for persona in fila.alumnos %}
+
+                        <article class="member-row">
+
+                            {% if persona.get('foto_perfil') %}
+                                <img class="avatar"
+                                     src="{% if persona.get('foto_perfil').startswith('data:image/') %}{{ persona.get('foto_perfil') }}{% else %}{{ url_for('static', filename='uploads/perfiles/' ~ persona.get('foto_perfil')) }}{% endif %}"
+                                     alt="">
+                            {% else %}
+                                <span class="avatar">{{ persona.get('nombre', 'A')[:1]|upper }}</span>
+                            {% endif %}
+
+                            <div class="member-info">
+
+                                <strong>
+                                    {{ persona.nombre }}
+                                    {{ persona.apellidos }}
+                                </strong>
+
+                                <small>
+                                    @{{ persona.Usuario }}
+                                    · Se unió
+                                    {{ persona.unido_en|hora_oaxaca('%d/%m/%Y %H:%M')
+                                       if persona.unido_en else '' }}
+                                </small>
+
+                            </div>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+        <!-- ALUMNOS INSCRITOS -->
+        <section class="form-card">
+
+            <div class="section-heading">
+
+                <div>
+                    <p class="eyebrow">PARTICIPANTES</p>
+
+                    <h2>
+                        Alumnos inscritos
+                        <span class="count">{{ alumnos|length }}</span>
+                    </h2>
+                </div>
+
+            </div>
+
+            {% if alumnos %}
+
+                <div class="member-list">
+
+                    {% for alumno in alumnos %}
+
+                        <article class="member-row">
+
+                            <!-- FOTO O AVATAR -->
+                            {% if alumno.get('foto_perfil') %}
+
+                                <img
+                                    class="avatar"
+                                    src="{% if alumno.get('foto_perfil').startswith('data:image/') %}{{ alumno.get('foto_perfil') }}{% else %}{{ url_for('static', filename='uploads/perfiles/' ~ alumno.get('foto_perfil')) }}{% endif %}"
+                                    alt=""
+                                >
+
+                            {% else %}
+
+                                <span class="avatar">
+                                    {{ alumno.get('nombre', alumno.get('Usuario', 'A'))[:1]|upper }}
+                                </span>
+
+                            {% endif %}
+
+                            <!-- DATOS DEL ALUMNO -->
+                            <div class="member-info">
+
+                                <strong>
+                                    {{ alumno.get('nombre', '') }}
+                                    {{ alumno.get('apellidos', '') }}
+                                </strong>
+
+                                <small>
+                                    @{{ alumno.get('Usuario', 'alumno') }}
+
+                                    {% if alumno.get('matricula') %}
+                                        · Matrícula {{ alumno.matricula }}
+                                    {% endif %}
+                                </small>
+
+                            </div>
+
+                            <!-- ELIMINAR ALUMNO -->
+                            <form
+                                method="post"
+                                action="{{ url_for('eliminar_alumno_clase', clase_id=clase.id, alumno_id=alumno.id) }}"
+                                onsubmit="return confirm('¿Quitar a este alumno de la clase?');"
+                            >
+                                <button
+                                    class="remove-button"
+                                    type="submit"
+                                    aria-label="Eliminar alumno de la clase"
+                                >
+                                    Expulsar
+                                </button>
+                            </form>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <!-- ESTADO VACÍO -->
+                <div class="empty-state">
+
+                    <i class="fa-solid fa-user-group"></i>
+
+                    <h3>Aún no hay alumnos</h3>
+
+                    <p>
+                        Cuando compartas el código de clase,
+                        los alumnos podrán unirse.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+        <!-- PIE DE PÁGINA -->
+        <footer>
+            © AulaFlow · Tu espacio académico
+        </footer>
+
+    </main>
+
+</body>
+</html>
