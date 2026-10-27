@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AulaFlow | Control de Turnos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <span>Aula<span>Flow</span></span>
+        </div>
+
+        <div class="nav-buttons">
+            <a href="{{ url_for('login') }}" class="btn-login">
+                Iniciar sesión
+            </a>
+            <a href="{{ url_for('registro') }}" class="btn-register">
+                Registrarse
+            </a>
+        </div>
+    </header>
+
+
+    <main>
+        <section class="hero" id="inicio">
+            <div class="hero-content">
+
+                <div class="tag">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    Organización académica
+                </div>
+
+                <h1>
+                    Tu turno.
+                    <br>
+                    <span>Tu momento.</span>
+                </h1>
+
+                <p>
+                    Organiza la atención entre profesores y alumnos
+                    mediante un sistema de turnos sencillo, rápido
+                    y ordenado.
+                </p>
+
+                <div class="hero-buttons">
+                    <a href="{{ url_for('registro') }}" class="btn-primary">Comenzar ahora</a>
+                    <a href="#slide-abajo" class="btn-secondary">Conocer más</a>
+                </div>
+            </div>
+
+
+            <div class="hero-card-container">
+
+                <div class="queue-card">
+                    <div class="queue-header">
+                        <div>
+                            <small>CLASE ACTIVA</small>
+                            <h3>Mod IV sub I Crea Aplicaciones Web</h3>
+                        </div>
+
+                        <div class="status">
+                            <span></span>
+                            Activa
+                        </div>
+                    </div>
+
+
+
+                    <div class="current-turn">
+                        <span>ATENDIENDO</span>
+                        <div class="turn-number">#04</div>
+                        <h2>Saul</h2>
+                        <p>Turno actual</p>
+                    </div>
+
+
+                    <div class="next-title">Siguientes</div>
+
+                    <div class="student">
+                        <div class="student-number">05</div>
+                        <div class="student-info">
+                            <strong>Caleb</strong>
+                            <small>Esperando</small>
+                        </div>
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+
+                    <div class="student">
+                        <div class="student-number">06</div>
+                        <div class="student-info">
+                            <strong>Luna</strong>
+                            <small>Esperando</small>
+                        </div>
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+
+                    <div class="student">
+                        <div class="student-number">07</div>
+                        <div class="student-info">
+                            <strong>Carlos</strong>
+                            <small>Esperando</small>
+                        </div>
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <section class="how-section" id="slide-abajo">
+
+            <div class="section-title">
+                <span>FÁCIL DE UTILIZAR</span>
+                <h2>¿Cómo funciona?</h2>
+            </div>
+
+            <div class="steps">
+
+                <div class="step">
+                    <h3>Crea tu cuenta</h3>
+                    <p>
+                        Regístrate como alumno o profesor
+                        y crea tu perfil.
+                    </p>
+                </div>
+
+                <div class="step">
+                    <h3>Únete a una clase</h3>
+                    <p>
+                        Los alumnos pueden ingresar utilizando
+                        el código proporcionado por su profesor.
+                    </p>
+                </div>
+
+                <div class="step">
+                    <h3>Haz fila</h3>
+                    <p>
+                        Como alumno olicita tu turno y observa cuántas
+                        personas faltan para tu turno.
+                    </p>
+                </div>
+
+                <div class="step">
+                    <h3>Es tu turno</h3>
+                    <p>
+                        Cuando llegue tu momento, sabrás que
+                        puedes pasar a revisión con el profesor.
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+
+        <section class="benefits" id="beneficios">
+            <div class="benefit-content">
+                <h2>MAS ORDEN,<span>MENOS DESORDEN</span></h2>
+                <p>
+                    AulaFlow ayuda a evitar que los alumnos tengan
+                    que esperar amontonados frente al profesor.
+                    Cada estudiante puede conocer su posición
+                    y esperar su turno de manera organizada.
+                </p>
+            </div>
+
+            <div class="benefit-box">
+                <i class="fa-solid fa-quote-left"></i>
+                <h3>“Cada alumno tiene su lugar.”</h3>
+                <p>
+                    El sistema permite que todos sepan
+                    quién sigue y cuándo es su momento
+                    de pasar.
+                </p>
+            </div>
+
+        </section>
+    </main>
+
+
+    <footer>
+        <div class="footer-logo">
+            <i class="fa-solid fa-graduation-cap"></i>
+            AulaFlow
+        </div>
+
+        <p>Sistema de gestión de turnos académicos</p>
+        <span>2026 AulaFlow</span>
+    </footer>
+    
+</body>
+</html>

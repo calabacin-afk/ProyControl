@@ -1,0 +1,18 @@
+services:
+  # Render usa esta receta para instalar y arrancar AulaFlow en la nube.
+  - type: web
+    name: aulaflow
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: "gunicorn app:app --workers 1 --bind 0.0.0.0:$PORT --no-preload"
+    envVars:
+      # Aquí van las llaves y ajustes que el servidor necesita al iniciar.
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: CODIGO_ADMIN
+        sync: false
+      - key: FIREBASE_CREDENTIALS_FILE
+        value: /etc/secrets/firebase_credentials.json

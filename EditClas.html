@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<!-- Formulario para actualizar los datos y la foto de una clase ya creada. -->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar {{ clase.nombre }} | AulaFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/editarclase.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <a class="brand" href="{{ url_for('panel_profesor') }}"><span class="brand-icon"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span><span>Aula<strong>Flow</strong></span></a>
+        <div class="nav-label">MENÚ</div>
+        <a class="nav-item" href="{{ url_for('panel_profesor') }}"><span class="nav-icon">⌂</span> Inicio</a>
+        <section class="sidebar-classes" aria-label="Clases creadas"><p class="sidebar-section-label">MIS CLASES</p>
+            {% if clases_menu %}<nav class="sidebar-class-list" aria-label="Acceso a mis clases">{% for clase_menu in clases_menu %}<a class="sidebar-class-link{% if clase_actual_id == clase_menu.id %} active{% endif %}" href="{{ url_for('detalle_clase_profesor', clase_id=clase_menu.id) }}" title="{{ clase_menu.nombre }}">{% if clase_menu.foto_clase %}<img class="sidebar-class-photo" src="{{ clase_menu.foto_clase }}" alt="">{% else %}<span class="sidebar-class-icon" aria-hidden="true">▦</span>{% endif %}<span class="sidebar-class-name">{{ clase_menu.nombre }}</span></a>{% endfor %}</nav>{% else %}<p class="sidebar-empty">Aún no tienes clases</p>{% endif %}
+        </section>
+        <div class="sidebar-bottom">
+            <a class="profile-mini profile-link" href="{{ url_for('perfil_profesor') }}">
+                {% if usuario.get('foto_perfil') %}<img class="avatar" src="{% if usuario.get('foto_perfil').startswith('data:image/') %}{{ usuario.foto_perfil }}{% else %}{{ url_for('static', filename='uploads/perfiles/' ~ usuario.foto_perfil) }}{% endif %}" alt="">
+                {% else %}<span class="avatar">{{ usuario.get('nombre', 'P')[:1]|upper }}</span>{% endif %}
+                <span class="profile-copy"><strong>{{ usuario.get('nombre', usuario.get('Usuario', 'Profesor')) }} {{ usuario.get('apellidos', '') }}</strong><small>Profesor · Editar perfil</small></span>
+            </a>
+            <a class="nav-item logout" href="{{ url_for('logout') }}"><span class="nav-icon">↪</span> Cerrar sesión</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar"><div class="breadcrumb"><a href="{{ url_for('panel_profesor') }}">AulaFlow</a><span>/</span><a href="{{ url_for('detalle_clase_profesor', clase_id=clase.id) }}">{{ clase.nombre }}</a><span>/</span>Editar</div><a class="top-link" href="{{ url_for('detalle_clase_profesor', clase_id=clase.id) }}">← Volver a la clase</a></header>
+        <section class="page-heading"><p class="eyebrow">CONFIGURACIÓN DE CLASE</p><h1>Editar clase</h1><p>Actualiza la información que verán tus alumnos.</p></section>
+        {% with mensajes = get_flashed_messages(with_categories=true) %}{% if mensajes %}<div class="messages" aria-live="polite">{% for categoria, mensaje in mensajes %}<p class="message {{ categoria }}">{{ mensaje }}</p>{% endfor %}</div>{% endif %}{% endwith %}
+
+        <form class="edit-form" method="post" enctype="multipart/form-data">
+            <section class="form-card">
+                <div class="card-heading"><span class="section-icon"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></span><div><h2>Información de la clase</h2><p>El nuevo código será el que tus alumnos usarán para unirse.</p></div></div>
+                <div class="photo-row">
+                    <div class="photo-preview" id="photo-preview">{% if clase.get('foto_clase') %}<img id="photo-image" src="{{ clase.foto_clase }}" alt="Foto actual de {{ clase.nombre }}">{% else %}<i class="fa-solid fa-book-open" aria-hidden="true"></i>{% endif %}</div>
+                    <div class="photo-controls"><label class="upload-button" for="foto_clase">Elegir foto de clase</label><input id="foto_clase" name="foto_clase" type="file" accept="image/jpeg,image/png,image/webp" hidden><small>JPG, PNG o WEBP · máximo 300 KB. La imagen también aparecerá en el menú lateral.</small><span class="selected-file" id="selected-file">No has seleccionado una imagen nueva.</span>
+                        {% if clase.get('foto_clase') %}<label class="remove-photo"><input type="checkbox" name="quitar_foto" value="1" id="quitar_foto"> Quitar la foto actual</label>{% endif %}
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="field full-width"><label for="nombre">Nombre de clase</label><input id="nombre" name="nombre" type="text" maxlength="80" value="{{ clase.nombre }}" required></div>
+                    <div class="field full-width"><label for="materia">Materia o asignatura</label><input id="materia" name="materia" type="text" maxlength="80" value="{{ clase.materia }}" required></div>
+                    <div class="field full-width"><label for="codigo">Código de clase</label><input id="codigo" name="codigo" type="text" minlength="6" maxlength="16" pattern="[A-Za-z0-9-]{6,16}" value="{{ clase.codigo }}" autocapitalize="characters" required><small>Entre 6 y 16 letras, números o guiones. El código debe ser único.</small></div>
+                </div>
+            </section>
+            <div class="form-actions"><a class="cancel-button" href="{{ url_for('detalle_clase_profesor', clase_id=clase.id) }}">Cancelar</a><button class="save-button" type="submit">Guardar cambios <span aria-hidden="true">→</span></button></div>
+        </form>
+        <footer>© AulaFlow · Tu espacio académico</footer>
+    </main>
+    <script>
+        var inputFoto = document.getElementById('foto_clase');
+        var preview = document.getElementById('photo-preview');
+        var nombreArchivo = document.getElementById('selected-file');
+        var quitarFoto = document.getElementById('quitar_foto');
+        var fotoOriginal = {{ clase.get('foto_clase', '')|tojson }};
+        inputFoto.addEventListener('change', function () {
+            var archivo = inputFoto.files[0];
+            if (!archivo) {
+                return;
+            }
+            nombreArchivo.textContent = archivo.name;
+            if (quitarFoto) quitarFoto.checked = false;
+            var lector = new FileReader();
+            lector.onload = function () {
+                preview.innerHTML = '';
+                var imagen = document.createElement('img');
+                imagen.src = lector.result;
+                imagen.alt = 'Vista previa de foto de clase';
+                preview.appendChild(imagen);
+            };
+            lector.readAsDataURL(archivo);
+        });
+        if (quitarFoto) quitarFoto.addEventListener('change', function () {
+            inputFoto.value = '';
+            if (quitarFoto.checked) {
+                nombreArchivo.textContent = 'Se quitará la foto actual al guardar.';
+                preview.innerHTML = '<i class="fa-solid fa-book-open" aria-hidden="true"></i>';
+            } else {
+                nombreArchivo.textContent = 'No has seleccionado una imagen nueva.';
+                var imagen = document.createElement('img');
+                imagen.src = fotoOriginal;
+                imagen.alt = 'Foto actual de la clase';
+                preview.innerHTML = '';
+                preview.appendChild(imagen);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<!-- Panel del profesor: resumen de cuenta y accesos para crear o abrir sus clases. -->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio | AulaFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profesor.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <a class="brand" href="{{ url_for('panel_profesor') }}"><span class="brand-icon"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span><span>Aula<strong>Flow</strong></span></a>
+        <div class="nav-label">MENÚ</div>
+        <a class="nav-item active" href="{{ url_for('panel_profesor') }}"><span class="nav-icon">⌂</span> Inicio</a>
+        <section class="sidebar-classes" aria-label="Clases creadas">
+            <p class="sidebar-section-label">MIS CLASES</p>
+            {% if clases_menu %}
+                <nav class="sidebar-class-list" aria-label="Acceso a mis clases">
+                    {% for clase_menu in clases_menu %}
+                        <a class="sidebar-class-link{% if clase_actual_id == clase_menu.id %} active{% endif %}"
+                           href="{{ url_for('detalle_clase_profesor', clase_id=clase_menu.id) }}"
+                           title="{{ clase_menu.nombre }}">
+                            {% if clase_menu.foto_clase %}
+                                <img class="sidebar-class-photo" src="{{ clase_menu.foto_clase }}" alt="">
+                            {% else %}
+                                <span class="sidebar-class-icon" aria-hidden="true">▦</span>
+                            {% endif %}
+                            <span class="sidebar-class-name">{{ clase_menu.nombre }}</span>
+                        </a>
+                    {% endfor %}
+                </nav>
+            {% else %}
+                <p class="sidebar-empty">Aún no tienes clases</p>
+            {% endif %}
+        </section>
+        <div class="sidebar-bottom">
+            <a class="profile-mini profile-link" href="{{ url_for('perfil_profesor') }}" aria-label="Editar perfil de {{ usuario.get('nombre', usuario.get('Usuario', 'profesor')) }}">
+                {% if usuario.get('foto_perfil') %}
+                    <img class="avatar"
+                         src="{% if usuario.get('foto_perfil').startswith('data:image/') %}{{ usuario.get('foto_perfil') }}{% else %}{{ url_for('static', filename='uploads/perfiles/' ~ usuario.get('foto_perfil')) }}{% endif %}"
+                         alt="">
+                {% else %}
+                    <span class="avatar">{{ usuario.get('nombre', usuario.get('Usuario', 'P'))[:1]|upper }}</span>
+                {% endif %}
+                <span class="profile-copy">
+                    <strong>{{ usuario.get('nombre', usuario.get('Usuario', 'Profesor')) }}{% if usuario.get('apellidos') %} {{ usuario.get('apellidos') }}{% endif %}</strong>
+                    <small>Profesor · Editar perfil</small>
+                </span>
+            </a>
+            <a class="nav-item logout" href="{{ url_for('logout') }}"><span class="nav-icon">↪</span> Cerrar sesión</a>
+        </div>
+    </aside>
+    <main class="main-content">
+        <header class="topbar">
+            <div class="breadcrumb">AulaFlow <span>/</span> Inicio</div>
+            <a class="top-logout" href="{{ url_for('logout') }}">Cerrar sesión <span aria-hidden="true">↗</span></a>
+        </header>
+        <section class="welcome">
+            <div>
+                <p class="eyebrow">TU ESPACIO ACADÉMICO</p>
+                <h1>Bienvenido, {{ usuario.get('nombre', usuario.get('Usuario', 'profesor')) }}</h1>
+                <p class="welcome-text">Aquí podrás consultar y organizar tu actividad académica.</p>
+            </div>
+            <i class="fa-solid fa-graduation-cap welcome-mark" aria-hidden="true"></i>
+        </section>
+        {% with mensajes = get_flashed_messages(with_categories=true) %}
+            {% if mensajes %}
+                <div class="messages" aria-live="polite">
+                    {% for categoria, mensaje in mensajes %}
+                        <p class="message {{ categoria }}">{{ mensaje }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <section class="summary-grid" aria-label="Resumen de la cuenta">
+            <article class="summary-card">
+                <span class="summary-icon blue"><i class="fa-regular fa-user" aria-hidden="true"></i></span>
+                <div>
+                    <span class="summary-label">TU CUENTA</span>
+                    <strong>Profesor</strong>
+                    <small>Perfil activo</small>
+                </div>
+            </article>
+            <a class="summary-card profile-card" href="{{ url_for('perfil_profesor') }}">
+                <span class="summary-icon green"><i class="fa-solid fa-gear" aria-hidden="true"></i></span>
+                <div>
+                    <span class="summary-label">CONFIGURACIÓN</span>
+                    <strong>Editar perfil</strong>
+                    <small>Actualiza tus datos y seguridad</small>
+                </div>
+                <span class="card-arrow" aria-hidden="true">→</span>
+            </a>
+        </section>
+        <!-- Aquí aparecen las clases del profesor; cada tarjeta abre o edita una clase. -->
+        <section class="classes-section" id="mis-clases">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">ORGANIZA TU ACTIVIDAD</p>
+                    <h2>Mis clases</h2>
+                </div>
+                <a class="create-class-button" href="{{ url_for('crear_clase') }}">
+                    <span aria-hidden="true">＋</span> Crear clase
+                </a>
+            </div>
+            {% if clases %}
+                <div class="teacher-class-grid">
+                    {% for clase in clases %}
+                        <article class="teacher-class-card">
+                            <div class="class-card-top">
+                                {% if clase.get('foto_clase') %}
+                                    <img class="class-symbol class-symbol-photo" src="{{ clase.foto_clase }}" alt="Foto de {{ clase.nombre }}">
+                                {% else %}
+                                    <span class="class-symbol">{{ clase.get('materia', clase.get('nombre', 'C'))[:1]|upper }}</span>
+                                {% endif %}
+                                <a class="edit-class-button" href="{{ url_for('editar_clase', clase_id=clase.id) }}" aria-label="Editar la clase {{ clase.nombre }}" title="Editar clase">
+                                    <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                            <a class="teacher-class-content" href="{{ url_for('detalle_clase_profesor', clase_id=clase.id) }}">
+                                <p class="class-subject">{{ clase.materia }}</p>
+                                <h3>{{ clase.nombre }}</h3>
+                                <p class="class-meta">Código: <strong>{{ clase.codigo }}</strong></p>
+                                <span class="open-class">
+                                    {{ clase.alumnos_total }} alumno(s) ·
+                                    {% if clase.fila %}
+                                        Fila {{ 'abierta' if clase.fila.estado == 'abierta' else 'en pausa' }}
+                                    {% else %}
+                                        Sin fila activa
+                                    {% endif %}
+                                    <span aria-hidden="true">→</span>
+                                </span>
+                            </a>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-illustration" aria-hidden="true"><i class="fa-solid fa-book-open"></i></div>
+                    <h2>Aún no tienes clases</h2>
+                    <p>Crea tu primera clase y comparte el código con tus alumnos para que puedan unirse.</p>
+                    <a class="create-class-button" href="{{ url_for('crear_clase') }}">
+                        <span aria-hidden="true">＋</span> Crear clase
+                    </a>
+                </div>
+            {% endif %}
+        </section>
+        <footer>© AulaFlow · Tu espacio académico</footer>
+    </main>
+</body>
+</html>

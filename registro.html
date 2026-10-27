@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!-- Formulario de alta: captura los datos de la cuenta y los manda al servidor. -->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completa tu registro | AulaFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+    <main class="auth-shell">
+        <a class="brand" href="{{ url_for('index') }}"><span class="brand-icon"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span><span>Aula<strong>Flow</strong></span></a>
+        <section class="auth-card auth-card-wide">
+            <div class="eyebrow">Paso 2 de 2 · {{ tipo_usuario|capitalize }}</div>
+            <h1>Completa tu registro</h1>
+            <p class="subtitle">Crea tus datos de acceso y perfil.</p>
+            {% with mensajes = get_flashed_messages(with_categories=true) %}
+                {% if mensajes %}<div class="messages" aria-live="polite">{% for categoria, mensaje in mensajes %}<p class="message {{ categoria }}">{{ mensaje }}</p>{% endfor %}</div>{% endif %}
+            {% endwith %}
+            <form action="{{ url_for('registrar_usuario') }}" method="post">
+                <div class="form-grid">
+                    <div class="field-group"><label for="nombre">Nombre</label><input id="nombre" name="nombre" type="text" autocomplete="given-name" maxlength="50" required></div>
+                    <div class="field-group"><label for="apellidos">Apellidos</label><input id="apellidos" name="apellidos" type="text" autocomplete="family-name" maxlength="80" required></div>
+                    <div class="field-group full-width"><label for="telefono">Número de teléfono</label><input id="telefono" name="telefono" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="55 1234 5678" maxlength="20" aria-describedby="telefono-help" required><small id="telefono-help">Número mexicano de 10 dígitos. Puedes escribirlo con +52.</small></div>
+                    <div class="field-group"><label for="Usuario">Usuario</label><input id="Usuario" name="Usuario" type="text" autocomplete="username" minlength="4" maxlength="30" pattern="[A-Za-z0-9_.-]+" aria-describedby="usuario-help" required><small id="usuario-help">4 a 30 caracteres; letras, números, punto, guion o guion bajo.</small></div>
+                    <div class="field-group"><label for="Clave">Contraseña</label><input id="Clave" name="Clave" type="password" autocomplete="new-password" required></div>
+                    {% if tipo_usuario == 'alumno' %}
+                    <div class="field-group"><label for="matricula">Matrícula</label><input id="matricula" name="matricula" type="text" autocomplete="off" maxlength="30"></div>
+                    <div class="field-group"><label for="grado">Grado</label><input id="grado" name="grado" type="text" maxlength="20"></div>
+                    <div class="field-group"><label for="grupo">Grupo</label><input id="grupo" name="grupo" type="text" maxlength="20"></div>
+                    <div class="field-group"><label for="especialidad">Especialidad</label><input id="especialidad" name="especialidad" type="text" maxlength="80"></div>
+                    {% endif %}
+                </div>
+                <button class="primary-button" type="submit">Crear cuenta <span aria-hidden="true"></span></button>
+            </form>
+            <p class="switch-link">¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia sesión</a></p>
+        </section>
+        <p class="back-link"><a href="{{ url_for('registro') }}">Cambiar tipo de cuenta</a></p>
+    </main>
+</body>
+</html>
